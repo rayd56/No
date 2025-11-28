@@ -4,12 +4,12 @@ const path = require('path');
 
 exports.config = {
     name: "maze",
-    author: "allou moha",//updated by NeoKEX
+    author: "Christus",
     role: 0,
     countDown: 40,
-    description: "Play maze with adjustable difficulty.",
+    description: "Jouer au labyrinthe avec difficulté ajustable.",
     version: "1.0.3",
-    guide: "{pn} [1-10] or {pn} [easy|medium|hard]",
+    guide: "{pn} [1-10] ou {pn} [easy|medium|hard]",
     category: "game",
 };
 
@@ -365,16 +365,16 @@ exports.onStart = async ({ args, message, event, commandName }) => {
 
         if (!isNaN(inputNumber)) {
             difficultyLevel = Math.max(1, Math.min(10, inputNumber));
-            difficultyMessage = `Level ${difficultyLevel}`;
+            difficultyMessage = `Niveau ${difficultyLevel}`;
         } else if (input === 'easy') {
             difficultyLevel = 4;
-            difficultyMessage = "Easy (Level 4)";
+            difficultyMessage = "Facile (Niveau 4)";
         } else if (input === 'medium') {
             difficultyLevel = 8;
-            difficultyMessage = "Medium (Level 8)";
+            difficultyMessage = "Moyen (Niveau 8)";
         } else if (input === 'hard') {
             difficultyLevel = 13;
-            difficultyMessage = "Hard (Level 13)";
+            difficultyMessage = "Difficile (Niveau 13)";
         }
     }
 
@@ -388,7 +388,7 @@ exports.onStart = async ({ args, message, event, commandName }) => {
     await new Promise((resolve) => writeStream.on('finish', resolve));
 
     const reply = await message.reply({
-        body: `🧩 Solve the maze! Difficulty: ${difficultyMessage}\n\n• Send your path in one message (e.g., ➡️➡️⬇️...)\n• A is the start, B is the end.\n• You have 3 attempts for wrong answers.`,
+        body: `🧩 Résous le labyrinthe ! Difficulté : ${difficultyMessage}\n\n• Envoie ton chemin en un seul message (ex : ➡️➡️⬇️...)\n• A est le départ, B est l’arrivée.\n• Tu as 3 tentatives pour les mauvaises réponses.`,
         attachment: fs.createReadStream(imagePath)
     });
     
@@ -404,7 +404,6 @@ exports.onStart = async ({ args, message, event, commandName }) => {
         attempts: 0,
         currentProgress: "",
         currentPosition: data.grid[0],
-        // Store the final calculated difficulty level for reward scaling
         finalDifficulty: difficultyLevel 
     });
 };
@@ -417,10 +416,10 @@ exports.onReply = async ({ message, event, Reply, usersData }) => {
     const userCode = trans(userEmoji);
     
     if (!/^[urdl⬆️➡️⬇️⬅️]+$/i.test(userEmoji)) {
-        return message.reply(`Please only use valid move emojis (⬆️ ➡️ ⬇️ ⬅️) or their corresponding letters (u, r, d, l) in one sequence.`);
+        return message.reply(`Utilise uniquement des emojis de mouvement valides (⬆️ ➡️ ⬇️ ⬅️) ou leurs lettres correspondantes (u, r, d, l) dans une seule séquence.`);
     }
     if (!/^[urdl]+$/i.test(userCode)) {
-        return message.reply(`Please only use valid move emojis (⬆️ ➡️ ⬇️ ⬅️) or their corresponding letters (u, r, d, l) in one sequence.`);
+        return message.reply(`Utilise uniquement des emojis de mouvement valides (⬆️ ➡️ ⬇️ ⬅️) ou leurs lettres correspondantes (u, r, d, l) dans une seule séquence.`);
     }
 
     const fullCode = currentProgress + userCode;
@@ -431,8 +430,6 @@ exports.onReply = async ({ message, event, Reply, usersData }) => {
     const isCorrectContinuation = isPartialSolutionCorrect(userPath, solutionPath, fullCode);
 
     if (isCorrectContinuation && userPath.length === solutionPath.length) {
-        // Dynamic Reward Calculation: Base 20000 / 8 * finalDifficulty
-        // Minimum reward is set to 2500 (1 * 2500)
         const baseCoinPerLevel = 2500; 
         const rewardAmount = Math.max(2500, Math.floor(baseCoinPerLevel * (finalDifficulty || 8))); 
         
@@ -452,20 +449,19 @@ exports.onReply = async ({ message, event, Reply, usersData }) => {
             await new Promise((resolve) => writeStream.on('finish', resolve));
 
             await message.reply({
-                body: `🎉 Correct! You solved the maze and earned $${rewardAmount.toLocaleString()}! The solution is shown in green.`,
+                body: `🎉 Correct ! Tu as résolu le labyrinthe et gagné $${rewardAmount.toLocaleString()} ! La solution est montrée en vert.`,
                 attachment: fs.createReadStream(imagePath)
             });
             fs.unlinkSync(imagePath);
             global.GoatBot.onReply.delete(event.messageID);
         } catch (e) {
-             message.reply(`🎉 You solved the maze! (Error crediting money: ${e.message})`);
+             message.reply(`🎉 Tu as résolu le labyrinthe ! (Erreur lors du crédit de l'argent : ${e.message})`);
              global.GoatBot.onReply.delete(event.messageID);
         }
         return;
     }
     
     if (isCorrectContinuation) {
-        // CORRECT CONTINUATION
         const currentCell = userPath[userPath.length - 1];
         Reply.currentProgress = fullCode;
         Reply.currentPosition = currentCell;
@@ -481,7 +477,7 @@ exports.onReply = async ({ message, event, Reply, usersData }) => {
         global.GoatBot.onReply.delete(event.messageID);
 
         const newReply = await message.reply({
-            body: `✅ Correct path! Continue from your position.\n\n📍 Progress: ${fullCode.length}/${solution.length} moves\n🎯 Keep going to reach point B!`,
+            body: `✅ Bonne direction ! Continue depuis ta position.\n\n📍 Progression : ${fullCode.length}/${solution.length} mouvements\n🎯 Continue pour atteindre le point B !`,
             attachment: fs.createReadStream(imagePath)
         });
         fs.unlinkSync(imagePath);
@@ -490,10 +486,8 @@ exports.onReply = async ({ message, event, Reply, usersData }) => {
         return;
     }
     
-    // WRONG PATH/MOVE
     Reply.attempts++;
     if (Reply.attempts >= 3) {
-        // GAME OVER
         const data = generateMazeImage(15, grid, cols, solutionPath, userPath);
         
         const imagePath = path.join(__dirname, global.utils.randomString(4) + ".png");
@@ -502,13 +496,12 @@ exports.onReply = async ({ message, event, Reply, usersData }) => {
         await new Promise((resolve) => writeStream.on('finish', resolve));
 
         await message.reply({
-            body: `❌ Game over! You ran out of attempts.\n\n✅ Correct solution shown in green\n❌ Your incorrect path shown in red`,
+            body: `❌ Partie terminée ! Tu as utilisé toutes tes tentatives.\n\n✅ Le bon chemin est en vert\n❌ Ton mauvais chemin est en rouge`,
             attachment: fs.createReadStream(imagePath)
         });
         fs.unlinkSync(imagePath);
         global.GoatBot.onReply.delete(event.messageID);
     } else {
-        // WRONG MOVE, ATTEMPTS REMAINING
-        await message.reply(`❌ Wrong path or move! Try again from your last checkpoint.\n\n🔄 Attempts remaining: ${3 - Reply.attempts}`);
+        await message.reply(`❌ Mauvais chemin ou mauvais mouvement ! Réessaie depuis ton dernier point.\n\n🔄 Tentatives restantes : ${3 - Reply.attempts}`);
     }
 };
