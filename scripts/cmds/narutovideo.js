@@ -5,17 +5,17 @@ module.exports = {
     name: "narutovideo",
     aliases: ["naruvid", "narutovid", "naruvideo"],
     version: "1.0",
-    author: "Saimx69x",
+    author: "Christus",
     role: 0,
     countDown: 5,
-    description: "Sends a random naruto video.",
+    description: "Envoie une vidéo aléatoire de Naruto.",
     category: "anime",
   },
 
   onStart: async function ({ api, event }) {
     try {
       const processingMessage = await api.sendMessage(
-        "⏳ Please wait few seconds...",
+        "⏳ Veuillez patienter quelques secondes...",
         event.threadID,
         event.messageID
       );
@@ -29,7 +29,7 @@ module.exports = {
       if (!res.data || !res.data.url) {
         await api.unsendMessage(processingMessage.messageID);
         return api.sendMessage(
-          "❌ Oops! Something went wrong, please try again later.",
+          "❌ Oups ! Une erreur est survenue, veuillez réessayer plus tard.",
           event.threadID,
           event.messageID
         );
@@ -38,7 +38,7 @@ module.exports = {
       const videoUrl = res.data.url;
 
       const msg = {
-        body: "🎬 Here's a random naruto video for you! 😊💖",
+        body: "🎬 Voici une vidéo aléatoire de Naruto pour vous ! 😊💖",
         attachment: await global.utils.getStreamFromURL(videoUrl),
       };
       await api.sendMessage(msg, event.threadID, event.messageID);
@@ -48,7 +48,7 @@ module.exports = {
     } catch (error) {
       console.error(error);
       await api.sendMessage(
-        "❌ Oops! Something went wrong, please try again later.",
+        "❌ Oups ! Une erreur est survenue, veuillez réessayer plus tard.",
         event.threadID,
         event.messageID
       );
