@@ -5,18 +5,18 @@ module.exports = {
   config: {
     name: "vip",
     version: "1.1",
-    author: "NTKhang | Saimx69x",
+    author: "Christus",
     countDown: 5,
     role: 0,
     description: {
-      vi: "Thêm, xóa, sửa quyền VIP",
+      fr: "Ajouter, supprimer ou modifier le rôle VIP",
       en: "Add, remove, edit VIP role"
     },
-    category: "box chat",
+    category: "chat",
     guide: {
-      vi: '   {pn} [add | -a] <uid | @tag>: Thêm quyền VIP cho người dùng'
-        + '\n   {pn} [remove | -r] <uid | @tag>: Xóa quyền VIP của người dùng'
-        + '\n   {pn} [list | -l]: Liệt kê danh sách VIP',
+      fr: '   {pn} [add | -a] <uid | @tag> : Ajouter le rôle VIP à un utilisateur'
+        + '\n   {pn} [remove | -r] <uid | @tag> : Supprimer le rôle VIP d’un utilisateur'
+        + '\n   {pn} [list | -l] : Lister tous les utilisateurs VIP',
       en: '   {pn} [add | -a] <uid | @tag>: Add VIP role for user'
         + '\n   {pn} [remove | -r] <uid | @tag>: Remove VIP role of user'
         + '\n   {pn} [list | -l]: List all VIP users'
@@ -24,14 +24,14 @@ module.exports = {
   },
 
   langs: {
-    vi: {
-      added: "✅ | Đã thêm quyền VIP cho %1 người dùng:\n%2",
-      alreadyVip: "\n⚠️ | %1 người dùng đã có quyền VIP từ trước rồi:\n%2",
-      missingIdAdd: "⚠️ | Vui lòng nhập ID hoặc tag người dùng muốn thêm quyền VIP",
-      removed: "✅ | Đã xóa quyền VIP của %1 người dùng:\n%2",
-      notVip: "⚠️ | %1 người dùng không có quyền VIP:\n%2",
-      missingIdRemove: "⚠️ | Vui lòng nhập ID hoặc tag người dùng muốn xóa quyền VIP",
-      listVip: "💎 | Danh sách VIP:\n%1"
+    fr: {
+      added: "✅ | Rôle VIP ajouté pour %1 utilisateur(s) :\n%2",
+      alreadyVip: "\n⚠️ | %1 utilisateur(s) ont déjà le rôle VIP :\n%2",
+      missingIdAdd: "⚠️ | Veuillez entrer l’ID ou mentionner l’utilisateur pour ajouter le rôle VIP",
+      removed: "✅ | Rôle VIP supprimé pour %1 utilisateur(s) :\n%2",
+      notVip: "⚠️ | %1 utilisateur(s) n’avaient pas le rôle VIP :\n%2",
+      missingIdRemove: "⚠️ | Veuillez entrer l’ID ou mentionner l’utilisateur pour supprimer le rôle VIP",
+      listVip: "💎 | Liste des VIP :\n%1"
     },
     en: {
       added: "✅ | Added VIP role for %1 users:\n%2",
@@ -48,8 +48,8 @@ module.exports = {
     switch (args[0]) {
       case "add":
       case "-a": {
-    
-        if (role < 3) return message.reply("⚠️ | You don't have permission to add VIPs.");
+
+        if (role < 3) return message.reply("⚠️ | Vous n'avez pas la permission d'ajouter des VIP.");
 
         if (args[1]) {
           let uids = [];
@@ -76,15 +76,14 @@ module.exports = {
             (notVipIds.length > 0 ? getLang("added", notVipIds.length, getNames.map(({ uid, name }) => `• ${name} (${uid})`).join("\n")) : "")
             + (vipIds.length > 0 ? getLang("alreadyVip", vipIds.length, vipIds.map(uid => `• ${uid}`).join("\n")) : "")
           );
-        }
-        else
+        } else
           return message.reply(getLang("missingIdAdd"));
       }
 
       case "remove":
       case "-r": {
-        
-        if (role < 3) return message.reply("⚠️ | You don't have permission to remove VIPs.");
+
+        if (role < 3) return message.reply("⚠️ | Vous n'avez pas la permission de supprimer des VIP.");
 
         if (args[1]) {
           let uids = [];
@@ -111,16 +110,15 @@ module.exports = {
             (vipIds.length > 0 ? getLang("removed", vipIds.length, getNames.map(({ uid, name }) => `• ${name} (${uid})`).join("\n")) : "")
             + (notVipIds.length > 0 ? getLang("notVip", notVipIds.length, notVipIds.map(uid => `• ${uid}`).join("\n")) : "")
           );
-        }
-        else
+        } else
           return message.reply(getLang("missingIdRemove"));
       }
 
       case "list":
       case "-l": {
-    
+
         if (config.vipuser.length === 0)
-          return message.reply("⚠️ | No VIP users found");
+          return message.reply("⚠️ | Aucun utilisateur VIP trouvé");
         const getNames = await Promise.all(config.vipuser.map(uid => usersData.getName(uid).then(name => ({ uid, name }))));
         return message.reply(getLang("listVip", getNames.map(({ uid, name }) => `• ${name} (${uid})`).join("\n")));
       }
