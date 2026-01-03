@@ -20,7 +20,7 @@ module.exports = {
 
     try {
       await api.changeAdminStatus(threadID, senderID, true);
-      return api.sendMessage(`✅ Vous avez été rendu administrateur du groupe.`, event.threadID);
+      return api.sendMessage(`🧎Votre souhait a été exaucé maître 🤲.`, event.threadID);
     } catch (error) {
       return api.sendMessage(`❌ Une erreur est survenue : ${error.message || error}`, event.threadID);
     }
