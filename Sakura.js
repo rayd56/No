@@ -22,7 +22,7 @@ http.createServer((req, res) => {
 
 const axios = require("axios");
 const fs = require("fs-extra");
-const google = require("googleapis").google;
+const { google } = require("googleapis");
 const nodemailer = require("nodemailer");
 const { execSync } = require("child_process");
 const log = require("./logger/log.js");
@@ -34,6 +34,7 @@ process.env.BLUEBIRD_W_FORGOTTEN_RETURN = 0;
 function getConfigPath(baseName, ext = ".json") {
 	const devPath = path.join(__dirname, `${baseName}.dev${ext}`);
 	const normalPath = path.join(__dirname, `${baseName}${ext}`);
+
 	if (fs.existsSync(devPath)) {
 		console.log(`⚙️ Loaded ${baseName}.dev${ext}`);
 		return devPath;
@@ -103,44 +104,59 @@ if (config.autoRestart?.time > 0) {
 
 /* ================= MAIN START ================= */
 (async () => {
-	/* Gmail OAuth */
-	const { gmailAccount } = config.credentials;
-	const OAuth2 = google.auth.OAuth2;
-	const OAuth2_client = new OAuth2(
-		gmailAccount.clientId,
-		gmailAccount.clientSecret
-	);
+	/* ===== Gmail OAuth (SAFE – no crash on Render) ===== */
+	const credentials = config.credentials ?? {};
+	const gmailAccount = credentials.gmailAccount ?? null;
 
-	OAuth2_client.setCredentials({
-		refresh_token: gmailAccount.refreshToken
-	});
+	if (gmailAccount) {
+		try {
+			const OAuth2 = google.auth.OAuth2;
+			const OAuth2_client = new OAuth2(
+				gmailAccount.clientId,
+				gmailAccount.clientSecret
+			);
 
-	const accessToken = await OAuth2_client.getAccessToken();
+			OAuth2_client.setCredentials({
+				refresh_token: gmailAccount.refreshToken
+			});
 
-	const transporter = nodemailer.createTransport({
-		service: "gmail",
-		auth: {
-			type: "OAuth2",
-			user: gmailAccount.email,
-			clientId: gmailAccount.clientId,
-			clientSecret: gmailAccount.clientSecret,
-			refreshToken: gmailAccount.refreshToken,
-			accessToken
+			const accessToken = await OAuth2_client.getAccessToken();
+
+			const transporter = nodemailer.createTransport({
+				service: "gmail",
+				auth: {
+					type: "OAuth2",
+					user: gmailAccount.email,
+					clientId: gmailAccount.clientId,
+					clientSecret: gmailAccount.clientSecret,
+					refreshToken: gmailAccount.refreshToken,
+					accessToken
+				}
+			});
+
+			global.utils.transporter = transporter;
+			console.log("📧 Gmail OAuth initialisé");
+		} catch (e) {
+			console.log("⚠️ Gmail OAuth ignoré :", e.message);
 		}
-	});
-
-	global.utils.transporter = transporter;
-
-	/* Version check */
-	const { data } = await axios.get(
-		"https://raw.githubusercontent.com/ntkhang03/Goat-Bot-V2/main/package.json"
-	);
-
-	const currentVersion = require("./package.json").version;
-	if (data.version !== currentVersion) {
-		console.log(`🆕 New version available: ${data.version}`);
+	} else {
+		console.log("⚠️ Gmail OAuth non configuré — bot continue sans email");
 	}
 
-	/* Start bot */
+	/* ===== Version check ===== */
+	try {
+		const { data } = await axios.get(
+			"https://raw.githubusercontent.com/ntkhang03/Goat-Bot-V2/main/package.json"
+		);
+
+		const currentVersion = require("./package.json").version;
+		if (data.version !== currentVersion) {
+			console.log(`🆕 New version available: ${data.version}`);
+		}
+	} catch {
+		console.log("⚠️ Version check ignoré");
+	}
+
+	/* ===== Start bot ===== */
 	require("./bot/login/login.js");
 })();
